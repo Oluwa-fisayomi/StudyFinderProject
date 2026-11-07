@@ -91,7 +91,7 @@ app.get('/api/health/database', async (req, res) => {
 // General API rate limiter
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 300,
+  limit: 4000,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
   message: {
@@ -163,7 +163,7 @@ const server = app.listen(PORT, () => {
   console.log('StudyFinder backend is running')
   console.log(`Server: http://localhost:${PORT}`)
   console.log(`Health: http://localhost:${PORT}/api/health`)
-  console.log('API rate limit: 300 requests per 15 minutes')
+  console.log('API rate limit: 4000 requests per 15 minutes')
   console.log('================================')
 
   stopSessionCleanup = startSessionCleanup()

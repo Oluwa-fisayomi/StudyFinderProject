@@ -12,7 +12,7 @@ const router = express.Router()
 // Limit repeated registration attempts
 const registrationLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 20,
+  limit: 2000,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
   message: {
@@ -24,7 +24,7 @@ const registrationLimiter = rateLimit({
 // Limit repeated login attempts
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 10,
+  limit: 2000,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
   message: {
