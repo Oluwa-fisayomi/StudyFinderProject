@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import {
@@ -47,7 +48,9 @@ function Login() {
 
       login(data.user)
 
-      const destination = location.state?.from || '/dashboard'
+      const destination =
+        location.state?.from ||
+        (data.user.role === 'ADMIN' ? '/admin' : '/dashboard')
 
       navigate(destination, { replace: true })
     } catch (err) {
