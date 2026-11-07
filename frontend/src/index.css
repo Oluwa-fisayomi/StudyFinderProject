@@ -1,0 +1,140 @@
+
+@import "tailwindcss";
+
+/* ==============================
+   STUDYFINDER GLOBAL THEME
+================================ */
+
+:root {
+  --forest-green: #183D32;
+  --sage-green: #315C4C;
+  --accent-sage: #668B72;
+  --soft-sage: #A8B9A8;
+  --warm-background: #F2F5F0;
+  --pale-sage: #EDF3EE;
+  --white: #FFFFFF;
+  --border-color: #E2E9E1;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  accent-color: var(--sage-green);
+}
+
+::selection {
+  background: var(--soft-sage);
+  color: var(--forest-green);
+}
+
+/* ==============================
+   GLOBAL RESPONSIVE SETTINGS
+================================ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  width: 100%;
+  overflow-x: hidden;
+  background-color: var(--warm-background);
+}
+
+#root {
+  min-height: 100vh;
+  width: 100%;
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+
+/* Prevent long text from breaking layouts */
+p,
+h1,
+h2,
+h3,
+h4,
+td,
+th {
+  overflow-wrap: break-word;
+}
+
+/* Tables should scroll instead of breaking mobile layouts */
+.overflow-x-auto {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* ==============================
+   MOBILE RESPONSIVENESS
+================================ */
+
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  button {
+    min-height: 40px;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+  }
+
+  main {
+    min-width: 0;
+  }
+
+  table {
+    min-width: 600px;
+  }
+}
+
+/* ==============================
+   TABLET RESPONSIVENESS
+================================ */
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  main {
+    min-width: 0;
+  }
+}
+
+/* ==============================
+   LARGE SCREEN SETTINGS
+================================ */
+
+@media (min-width: 1025px) {
+  main {
+    min-width: 0;
+  }
+}

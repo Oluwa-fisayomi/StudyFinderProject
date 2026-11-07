@@ -1,0 +1,13 @@
+
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "scripts": {
+    "build": "npm run build --prefix frontend"
+  },
+  "dependencies": {
+    "@neon/config": "^1.12.1",
+    "@neon/env": "^2.0.1",
+    "@tailwindcss/vite": "^4.3.4",
+    "tailwindcss": "^4.3.4"
+  }
+}

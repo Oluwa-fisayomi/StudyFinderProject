@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Database backups
+*.backup
+*.bak
+*.sql
+!backend/prisma/migrations/**/*.sql
+
+# Generated Prisma client
+backend/generated/prisma/
+
+# Logs
+*.log
+logs/
+
+# Python notebooks
+.ipynb_checkpoints/
+
+# Local files
+*.local
+.DS_Store
+Thumbs.db
+
+# Editor settings
+.vscode/
+.idea/
+
+# Local AI development tools
+backend/.agents/
+backend/.claude/
+backend/.windsurf/
+
+# Local project reference files
+Study_Group_Finder_Project_Blueprint_REVISED.pdf
+Untitled.ipynb
+.neon

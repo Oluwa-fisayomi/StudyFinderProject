@@ -1,0 +1,352 @@
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// -------------------------
+// ENUMS
+// -------------------------
+
+enum UserRole {
+  STUDENT
+  MODERATOR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum GroupVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum GroupFormat {
+  ONLINE
+  IN_PERSON
+  HYBRID
+}
+
+enum GroupStatus {
+  ACTIVE
+  ARCHIVED
+  SUSPENDED
+}
+
+enum MembershipRole {
+  OWNER
+  MODERATOR
+  MEMBER
+}
+
+enum MembershipStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  LEFT
+  BANNED
+}
+
+enum NotificationType {
+  GROUP_INVITATION
+  MEMBERSHIP_APPROVED
+  MEMBERSHIP_REJECTED
+  NEW_DISCUSSION
+  NEW_COMMENT
+  GROUP_UPDATE
+  MODERATION
+  SYSTEM
+}
+
+enum ReportStatus {
+  PENDING
+  UNDER_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+enum ReportTargetType {
+  USER
+  GROUP
+  POST
+  COMMENT
+}
+
+// -------------------------
+// USERS
+// -------------------------
+
+model User {
+  id              String     @id @default(uuid()) @db.Uuid
+  email           String     @unique
+  passwordHash    String?
+  role            UserRole   @default(STUDENT)
+  status          UserStatus @default(ACTIVE)
+  emailVerifiedAt DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  profile        Profile?
+  sessions       Session[]
+  accounts       OAuthAccount[]
+  createdGroups  StudyGroup[] @relation("GroupCreator")
+  memberships    Membership[]
+  posts          DiscussionPost[]
+  comments       Comment[]
+  moderatedPosts DiscussionPost[] @relation("PostModerator")
+  notifications  Notification[] @relation("NotificationRecipient")
+
+  reportsFiled    Report[] @relation("ReportAuthor")
+  reportsAssigned Report[] @relation("ReportReviewer")
+
+  auditLogs AuditLog[] @relation("AuditActor")
+
+  @@index([role, status])
+  @@index([createdAt])
+}
+
+// -------------------------
+// STUDENT PROFILES
+// -------------------------
+
+model Profile {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @unique @db.Uuid
+  firstName   String
+  lastName    String
+  username    String   @unique
+  studentId   String?  @unique
+  institution String?
+  department  String?
+  level       String?
+  bio         String?
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// -------------------------
+// AUTHENTICATION SESSIONS
+// -------------------------
+
+model Session {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// -------------------------
+// GOOGLE AND OTHER OAUTH ACCOUNTS
+// -------------------------
+
+model OAuthAccount {
+  id                String   @id @default(uuid()) @db.Uuid
+  userId            String   @db.Uuid
+  provider          String
+  providerAccountId String
+  createdAt         DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+// -------------------------
+// STUDY GROUPS
+// -------------------------
+
+model StudyGroup {
+  id          String          @id @default(uuid()) @db.Uuid
+  name        String
+  description String
+  courseCode  String
+  subject     String?
+  schedule    String?
+  format      GroupFormat     @default(ONLINE)
+  meetingLink String?
+  location    String?
+  visibility  GroupVisibility @default(PUBLIC)
+  capacity    Int?
+  status      GroupStatus     @default(ACTIVE)
+  creatorId   String          @db.Uuid
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  creator     User             @relation("GroupCreator", fields: [creatorId], references: [id])
+  memberships Membership[]
+  posts       DiscussionPost[]
+  reports     Report[]
+
+  @@index([courseCode])
+  @@index([status, visibility])
+  @@index([creatorId])
+  @@index([createdAt])
+}
+
+// -------------------------
+// GROUP MEMBERSHIPS
+// -------------------------
+
+model Membership {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @db.Uuid
+  groupId   String           @db.Uuid
+  role      MembershipRole   @default(MEMBER)
+  status    MembershipStatus @default(PENDING)
+  joinedAt  DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+  @@index([groupId, status])
+  @@index([userId, status])
+}
+
+// -------------------------
+// DISCUSSION POSTS
+// -------------------------
+
+model DiscussionPost {
+  id        String   @id @default(uuid()) @db.Uuid
+  groupId   String   @db.Uuid
+  authorId  String   @db.Uuid
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Soft deletion and moderation
+  deletedAt     DateTime?
+  deletedById   String?   @db.Uuid
+  deletedReason String?
+
+  group  StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  author User       @relation(fields: [authorId], references: [id])
+
+  deletedBy User? @relation("PostModerator", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  comments Comment[]
+  reports  Report[]
+
+  @@index([groupId, createdAt])
+  @@index([authorId])
+  @@index([deletedAt, createdAt])
+  @@index([deletedById])
+}
+
+// -------------------------
+// COMMENTS
+// -------------------------
+
+model Comment {
+  id        String   @id @default(uuid()) @db.Uuid
+  postId    String   @db.Uuid
+  authorId  String   @db.Uuid
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post    DiscussionPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author  User           @relation(fields: [authorId], references: [id])
+  reports Report[]
+
+  @@index([postId, createdAt])
+  @@index([authorId])
+}
+
+// -------------------------
+// NOTIFICATIONS
+// -------------------------
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @db.Uuid
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt])
+}
+
+// -------------------------
+// REPORTS AND MODERATION
+// -------------------------
+
+model Report {
+  id          String           @id @default(uuid()) @db.Uuid
+  reporterId  String           @db.Uuid
+  targetType  ReportTargetType
+  targetId    String           @db.Uuid
+  reason      String
+  description String?
+  status      ReportStatus     @default(PENDING)
+  reviewerId  String?          @db.Uuid
+  reviewedAt  DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  targetGroupId   String? @db.Uuid
+  targetPostId    String? @db.Uuid
+  targetCommentId String? @db.Uuid
+
+  reporter User  @relation("ReportAuthor", fields: [reporterId], references: [id])
+  reviewer User? @relation("ReportReviewer", fields: [reviewerId], references: [id])
+
+  group   StudyGroup?     @relation(fields: [targetGroupId], references: [id], onDelete: Cascade)
+  post    DiscussionPost? @relation(fields: [targetPostId], references: [id], onDelete: Cascade)
+  comment Comment?        @relation(fields: [targetCommentId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([reporterId])
+  @@index([reviewerId])
+  @@index([targetType, targetId])
+  @@index([targetGroupId])
+  @@index([targetPostId])
+  @@index([targetCommentId])
+}
+
+// -------------------------
+// ADMINISTRATIVE AUDIT LOGS
+// -------------------------
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorId    String?  @db.Uuid
+  action     String
+  entityType String
+  entityId   String?
+  details    Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
